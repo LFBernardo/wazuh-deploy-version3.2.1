@@ -9,7 +9,7 @@
 
 
 #preparation
-set -x
+set -x #for debug
 apt-get update
 apt-get install curl apt-transport-https lsb-release -y
 
@@ -69,8 +69,11 @@ systemctl enable elasticsearch.service
 systemctl start elasticsearch.service
 #add Wazuh templates
 curl https://raw.githubusercontent.com/wazuh/wazuh/3.0/extensions/elasticsearch/wazuh-elastic6-template-alerts.json | curl -XPUT 'http://localhost:9200/_template/wazuh' -H 'Content-Type: application/json' -d @-
+sleep 6
 curl https://raw.githubusercontent.com/wazuh/wazuh/3.0/extensions/elasticsearch/wazuh-elastic6-template-monitoring.json | curl -XPUT 'http://localhost:9200/_template/wazuh-agent' -H 'Content-Type: application/json' -d @-
+sleep 6
 curl https://raw.githubusercontent.com/wazuh/wazuh/3.0/extensions/elasticsearch/alert_sample.json | curl -XPUT "http://localhost:9200/wazuh-alerts-3.x-"`date +%Y.%m.%d`"/wazuh/sample" -H 'Content-Type: application/json' -d @-
+sleep 6
 #Logstash
 apt-get install logstash=6.1.0 -y
 curl -so /etc/logstash/conf.d/01-wazuh.conf https://raw.githubusercontent.com/wazuh/wazuh/3.0/extensions/logstash/01-wazuh-local.conf
@@ -82,7 +85,11 @@ sleep 5
 
 #Kibana
 apt-get install kibana=6.1.0 -y
-/usr/share/kibana/bin/kibana-plugin install https://packages.wazuh.com/wazuhapp/wazuhapp.zip
+#The commented line below appears to be problematic with proxy servers and or dodgy internet connections. The new lines compensate for this.
+#/usr/share/kibana/bin/kibana-plugin install https://packages.wazuh.com/wazuhapp/wazuhapp.zip
+wget https://packages.wazuh.com/wazuhapp/wazuhapp.zip -O /tmp/wazuhapp.zip
+/usr/share/kibana/bin/kibana-plugin install file:///tmp/wazuhapp.zip
+
 sed -i '/#server.host: "localhost"/c\server.host: "0.0.0.0"' /etc/kibana/kibana.yml
 systemctl daemon-reload
 systemctl enable kibana.service

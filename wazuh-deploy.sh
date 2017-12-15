@@ -32,6 +32,22 @@ systemctl status wazuh-api
 service wazuh-api status
 sleep 5
 
+############################################################################################################################
+#Add filebeat
+####################### Uncomment the following bbefore running if you need filebeat locally ###############################
+#curl -s https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
+#echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | tee /etc/apt/sources.list.d/elastic-6.x.list
+#apt-get update
+#apt-get install filebeat -y
+#curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/3.0/extensions/filebeat/filebeat.yml
+#sed -i 's/ELASTIC_SERVER_IP/127.0.0.1/g' /etc/filebeat/filebeat.yml
+#systemctl daemon-reload
+#systemctl enable filebeat.service
+#systemctl start filebeat.service
+#systemctl status filebeat.service
+#sleep 5
+############################################################################################################################
+
 #Install ELK
 #Java
 echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee /etc/apt/sources.list.d/webupd8team-java.list

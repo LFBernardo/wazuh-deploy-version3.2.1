@@ -98,3 +98,40 @@ sleep 5
 
 #disable elastic repo to prevent unintentional damage when new versions are released
 sed -i -r '/deb https:\/\/artifacts.elastic.co\/packages\/6.x\/apt stable main/ s/^(.*)$/#\1/g' /etc/apt/sources.list.d/elastic-6.x.list
+
+######### Create backup dir for default config files
+#mkdir /wazuhinstall
+
+######### Configure Self-Signed Certificate for Logstash and Filebeat
+######### Uncomment the following lines and update the values indicated e.g. sed -i '/\[ v3_ca \]/a subjectAltName = IP: 10.10.10.10 ' /tmp/custom_openssl.cnf
+#cp /etc/ssl/openssl.cnf /wazuhinstall/custom_openssl.cnf
+#sed -i '/\[ v3_ca \]/a subjectAltName = IP: {IP address} ' /wazuhinstall/custom_openssl.cnf #Replace IP address with your server address.
+#openssl req -x509 -batch -nodes -days 3650 -newkey rsa:2048 -keyout /etc/logstash/logstash.key -out /etc/logstash/logstash.crt -config /wazuhinstall/custom_openssl.cnf
+#rm /wazuhinstall/custom_openssl.cnf
+
+######### Enable SSL for Logstash
+######### The following removes the comment hashes and enables SSL for Logstash ######
+
+#cp /etc/logstash/conf.d/01-wazuh.conf /wazuhinstall/01-wazuh.conf.bak
+#sed -i '/^#. * ssl => true/s/^#//' /etc/logstash/conf.d/01-wazuh.conf
+#sed -i '/^#. * ssl_certificate/s/^#//' /etc/logstash/conf.d/01-wazuh.conf
+#sed -i '/^#. * ssl_key/s/^#//' /etc/logstash/conf.d/01-wazuh.conf
+#systemctl restart logstash.service
+
+######### Enable SSL for filebeat
+######### The following removes the comment hashes and enables SSL for filebeat ######
+#cp /etc/logstash/logstash.crt /etc/filebeat/logstash.crt
+#cp /etc/filebeat/filebeat.yml /wazuhinstall/filebeat.yml.bak
+#sed -i '/^#. * ssl/s/^#//' /etc/filebeat/filebeat.yml
+#sed -i '/^#. * certificate_authorities/s/^#//' /etc/filebeat/filebeat.yml
+#systemctl restart filebeat.service
+
+######### Secure Wazuh API
+######### Uncomment the following to configure security for the Wazuh Api
+#cd /var/ossec/api/configuration/auth
+#sudo node htpasswd -c user myUserName #Replace myUserName with a username of your choice
+
+#Enable HTTPS on Wazuh API
+echo PLEASE ANSWER THE FOLLOWING PROMPTS......
+/var/ossec/api/scripts/configure_api.sh
+echo ACTION COMPLETE

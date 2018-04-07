@@ -1,6 +1,10 @@
 #/bin/bash
 
-
+# Updated to Versions:
+# Elasticsearch:6.2.3
+# Logstash:6.2.3-1
+# Kibana: 6.2.3
+# Wazuh: 3.2.1-1
 # This script will deploy Wazuh and it's dependencies on a single host.
 # abbreviated version of commands from the URL in the next line. Some added sed instructions to perform configuration.
 # URL1: https://documentation.wazuh.com/current/installation-guide/installing-wazuh-server/wazuh_server_deb.html#wazuh-server-deb
@@ -20,12 +24,14 @@ apt-get update
 
 #Install Wazuh Manager
 apt-get install wazuh-manager -y
-systemctl status wazuh-manager
+systemctl status wazuh-manager -y
 service wazuh-manager status
 sleep 5
 
 #Adding Wazuh API
-curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_6.x | bash -
+#old config
+#curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 apt-get install nodejs -y
 apt-get install wazuh-api -y
 systemctl status wazuh-api
@@ -59,24 +65,23 @@ echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | 
 echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
 echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
 apt-get install oracle-java8-installer -y
+apt-get install curl apt-transport-https
 curl -s https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
 echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | tee /etc/apt/sources.list.d/elastic-6.x.list
 apt-get update
 #Elasticsearch
-apt-get install elasticsearch=6.1.0 -y
+apt-get install elasticsearch=6.2.3 -y
 systemctl daemon-reload
 systemctl enable elasticsearch.service
 systemctl start elasticsearch.service
+sleep 15
 #add Wazuh templates
-curl https://raw.githubusercontent.com/wazuh/wazuh/3.0/extensions/elasticsearch/wazuh-elastic6-template-alerts.json | curl -XPUT 'http://localhost:9200/_template/wazuh' -H 'Content-Type: application/json' -d @-
+curl https://raw.githubusercontent.com/wazuh/wazuh/3.2/extensions/elasticsearch/wazuh-elastic6-template-alerts.json | curl -XPUT 'http://localhost:9200/_template/wazuh' -H 'Content-Type: application/json' -d @-
 sleep 6
-curl https://raw.githubusercontent.com/wazuh/wazuh/3.0/extensions/elasticsearch/wazuh-elastic6-template-monitoring.json | curl -XPUT 'http://localhost:9200/_template/wazuh-agent' -H 'Content-Type: application/json' -d @-
-sleep 6
-curl https://raw.githubusercontent.com/wazuh/wazuh/3.0/extensions/elasticsearch/alert_sample.json | curl -XPUT "http://localhost:9200/wazuh-alerts-3.x-"`date +%Y.%m.%d`"/wazuh/sample" -H 'Content-Type: application/json' -d @-
-sleep 6
+
 #Logstash
-apt-get install logstash=6.1.0 -y
-curl -so /etc/logstash/conf.d/01-wazuh.conf https://raw.githubusercontent.com/wazuh/wazuh/3.0/extensions/logstash/01-wazuh-local.conf
+apt-get install logstash=1:6.2.3-1 -y
+curl -so /etc/logstash/conf.d/01-wazuh.conf https://raw.githubusercontent.com/wazuh/wazuh/3.2/extensions/logstash/01-wazuh-local.conf
 usermod -a -G ossec logstash
 systemctl daemon-reload
 systemctl enable logstash.service
@@ -84,11 +89,12 @@ systemctl start logstash.service
 sleep 5
 
 #Kibana
-apt-get install kibana=6.1.0 -y
-#The commented line below appears to be problematic with proxy servers and or dodgy internet connections. The new lines compensate for this.
-#/usr/share/kibana/bin/kibana-plugin install https://packages.wazuh.com/wazuhapp/wazuhapp.zip
-wget https://packages.wazuh.com/wazuhapp/wazuhapp.zip -O /tmp/wazuhapp.zip
-/usr/share/kibana/bin/kibana-plugin install file:///tmp/wazuhapp.zip
+apt-get install kibana=6.2.3 -y
+export NODE_OPTIONS="--max-old-space-size=3072"
+#The commented line below appears to be problematic with proxy servers and or dodgy internet connections. The new lines compensate for this. Uncomment them if needed.
+/usr/share/kibana/bin/kibana-plugin install https://packages.wazuh.com/wazuhapp/wazuhapp-3.2.1_6.2.3.zip
+#wget https://packages.wazuh.com/wazuhapp/wazuhapp.zip -O /tmp/wazuhapp.zip
+#/usr/share/kibana/bin/kibana-plugin install file:///tmp/wazuhapp.zip
 
 sed -i '/#server.host: "localhost"/c\server.host: "0.0.0.0"' /etc/kibana/kibana.yml
 systemctl daemon-reload
@@ -134,4 +140,4 @@ sed -i -r '/deb https:\/\/artifacts.elastic.co\/packages\/6.x\/apt stable main/ 
 #Enable HTTPS on Wazuh API
 echo PLEASE ANSWER THE FOLLOWING PROMPTS......
 /var/ossec/api/scripts/configure_api.sh
-echo ACTION COMPLETE
+echo *****************************ACTION COMPLETE*************************************

@@ -1,11 +1,11 @@
 # wazuh-deploy
 
- NOTE: Elastic is in the process of updating packages. Some of the installs will fail until they are complete. 14/12/2017
+ Updated to latest versions 06/04/2018
 
 Automation script for single host Wazuh deployment. (Debian/Ubuntu based)
 This script was created to simplify the deployment of Wazuh in mass testing exercises. I take no responsibility for the consequences of running this script, it works for me :)
 
-Tested on Ubuntu Server 16.04.3 LTS December 2017
+Tested on Ubuntu Server 16.04.3 LTS April 2018
 
 If you receive errors similar to the following:
 "cannot copy extracted data for './etc/init.d/kibana' to '/etc/init.d/kibana.dpkg-new': unexpected end of file or stream"
